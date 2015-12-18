@@ -1,0 +1,156 @@
+#define true             1
+#define false            0
+#define paddlethickness 10
+
+struct { x, y, r, xdir, ydir, angle } ball_s;
+struct { x, y, l }                  paddle_s;
+
+// 0D drawing mode
+() {
+
+   static ball_s ball;
+   static paddle_s top, bottom;
+   
+   ball.x    =               xres / 2;
+   ball.y    =               yres / 2;
+   ball.r    =                     10;
+   ball.xdir =                      1;
+   ball.ydir =                      1;
+   ball.angle=        RND % 140 + 200;
+   top.x     =               xres / 2;
+   top.y     =                      0;
+   top.l     =                    100;
+   bottom.x  =               xres / 2;
+   bottom.y  = yres - paddlethickness;
+   bottom.l  =                    100;
+
+   while( true ) {
+      
+      //if ( bstatus ) { begin( ball.falling ); }
+   
+      //debuglines( ball.x, ball.y );
+      cls( 0 );
+      drawpaddle( top.x, top.y, top.l );
+      drawpaddle( bottom.x, bottom.y, bottom.l );
+      drawball( ball.x, ball.y, ball.r );
+      debuglines( ball.x, ball.y );
+      refresh();
+      
+      movepaddle( bottom.x, bottom.y, bottom.l, 2 );
+      enemyai( top.x, top.y, top.l, 3, ball.x, 10 );
+      moveball( ball, top.x, top.l, bottom.x, bottom.l, 2, 2 );
+      checkscore();
+
+   }
+
+}
+
+begin( &falling ) {
+   falling = true;
+}
+
+debuglines( x, y ) {
+
+   setcol( 0xff0000 );
+   setpix( x, y );
+
+}
+
+drawball( x, y, r ) {
+
+   setcol( 0x0000ff );
+   drawsph( x, y, -r );
+
+}
+
+drawpaddle( x, y, l ) {
+
+   setcol( 0x00ff00 );
+   for ( i = 0; i < paddlethickness; i++ ) {
+      moveto( x - l, y );
+      lineto( x + l, y );
+      y++;
+   }   
+
+}
+
+movepaddle( &x, &y, l, dx ) {
+
+   if ( keystatus[0xcb] ) { // Left-arrow key
+      x -= dx;
+   }
+   
+   if ( keystatus[0xcd] ) { // Right-arrow key
+      x += dx;
+   }
+   
+   if ( x < l ) {
+      x = l;
+   }
+   
+   if ( x > xres - l ) {
+      x = xres - l;
+   }
+
+}
+
+enemyai( &x, &y, l, dx, ballx, skill ) {
+
+   if ( ballx < x - skill ) {
+      x -= dx;
+   }
+   
+   if ( ballx > x + skill ) {
+      x += dx;
+   }
+   
+   if ( x < l ) {
+      x = l;
+   }
+   
+   if ( x > xres - l ) {
+      x = xres - l;
+   }
+
+}
+
+moveball( ball_s ball, topx, topl, bottomx, bottoml, dx, dy ) {
+
+   ball.x += cos( ball.angle * PI / 180 ) * dx * ball.xdir;
+   ball.y += sin( ball.angle * PI / 180 ) * dy * ball.ydir;
+   
+   if ( ball.x < ball.r ) {
+      ball.xdir = -ball.xdir;
+   }
+   
+   if ( ball.x > xres - ball.r ) {
+      ball.xdir = -ball.xdir;
+   }
+   
+   if ( ball.x > topx - topl && 
+        ball.x < topx + topl && 
+        ball.y < ball.r + paddlethickness ) {
+        
+      ball.ydir = -ball.ydir;
+      dx = 5 * ( ( ball.x - topx ) / 25 );
+      
+   }
+   
+   if ( ball.x > bottomx - bottoml && 
+        ball.x < bottomx + bottoml && 
+        ball.y > yres - ball.r - paddlethickness ) { 
+        
+      ball.ydir = -ball.ydir;
+      dx = 5 * ( ( ball.x - bottomx ) / 25 );
+      
+   }
+   
+   ball.angle = RND % 140 + 200;
+
+}
+
+checkscore() {
+
+   
+
+}
