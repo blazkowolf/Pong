@@ -1,28 +1,33 @@
 #define true             1
 #define false            0
-#define paddlethickness 10
+#define paddlethickness 20
+
+enum { Line, Fill };
+
+struct { x, y }                     origin_s;
 
 struct { x, y, r, xdir, ydir, angle } ball_s;
-struct { x, y, l }                  paddle_s;
+struct { x, y, w }                  paddle_s;
 
-// 0D drawing mode
-() {
+static origin_s origin;
+
+() { // 0D drawing mode
 
    static ball_s ball;
    static paddle_s top, bottom;
    
-   ball.x    =               xres / 2;
-   ball.y    =               yres / 2;
-   ball.r    =                     10;
-   ball.xdir =                      1;
-   ball.ydir =                      1;
-   ball.angle=        RND % 140 + 200;
-   top.x     =               xres / 2;
-   top.y     =                      0;
-   top.l     =                    100;
-   bottom.x  =               xres / 2;
-   bottom.y  = yres - paddlethickness;
-   bottom.l  =                    100;
+   ball.x     =               xres / 2;
+   ball.y     =               yres / 2;
+   ball.r     =                     10;
+   ball.xdir  =                      1;
+   ball.ydir  =                      1;
+   ball.angle =        RND % 140 + 200;
+   top.x      =               xres / 2;
+   top.y      =                      0;
+   top.w      =                    200;
+   bottom.x   =               xres / 2;
+   bottom.y   = yres - paddlethickness;
+   bottom.w   =                    200;
 
    while( true ) {
       
@@ -30,15 +35,15 @@ struct { x, y, l }                  paddle_s;
    
       //debuglines( ball.x, ball.y );
       cls( 0 );
-      drawpaddle( top.x, top.y, top.l );
-      drawpaddle( bottom.x, bottom.y, bottom.l );
+      drawpaddle( top.x, top.y, top.w );
+      drawpaddle( bottom.x, bottom.y - 1, bottom.w ); // 
       drawball( ball.x, ball.y, ball.r );
-      debuglines( ball.x, ball.y );
+      //debuglines( ball.x, ball.y );
       refresh();
       
-      movepaddle( bottom.x, bottom.y, bottom.l, 2 );
-      enemyai( top.x, top.y, top.l, 3, ball.x, 10 );
-      moveball( ball, top.x, top.l, bottom.x, bottom.l, 2, 2 );
+      movepaddle( bottom.x, bottom.y, bottom.w, 2 );
+      enemyai( top.x, top.y, top.w, 3, ball.x, 10 );
+      moveball( ball, top.x, top.w, bottom.x, bottom.w, 2, 2 );
       checkscore();
 
    }
@@ -63,18 +68,15 @@ drawball( x, y, r ) {
 
 }
 
-drawpaddle( x, y, l ) {
+drawpaddle( x, y, w ) {
 
    setcol( 0x00ff00 );
-   for ( i = 0; i < paddlethickness; i++ ) {
-      moveto( x - l, y );
-      lineto( x + l, y );
-      y++;
-   }   
+   translateorigin( x, y );
+   drawrect( -w/2, 0, w, paddlethickness, Line );   
 
 }
 
-movepaddle( &x, &y, l, dx ) {
+movepaddle( &x, &y, w, dx ) {
 
    if ( keystatus[0xcb] ) { // Left-arrow key
       x -= dx;
@@ -84,17 +86,17 @@ movepaddle( &x, &y, l, dx ) {
       x += dx;
    }
    
-   if ( x < l ) {
-      x = l;
+   if ( x < w ) {
+      x = w;
    }
    
-   if ( x > xres - l ) {
-      x = xres - l;
+   if ( x > xres - w ) {
+      x = xres - w;
    }
 
 }
 
-enemyai( &x, &y, l, dx, ballx, skill ) {
+enemyai( &x, &y, w, dx, ballx, skill ) {
 
    if ( ballx < x - skill ) {
       x -= dx;
@@ -104,12 +106,12 @@ enemyai( &x, &y, l, dx, ballx, skill ) {
       x += dx;
    }
    
-   if ( x < l ) {
-      x = l;
+   if ( x < w ) {
+      x = w;
    }
    
-   if ( x > xres - l ) {
-      x = xres - l;
+   if ( x > xres - w ) {
+      x = xres - w;
    }
 
 }
@@ -150,7 +152,33 @@ moveball( ball_s ball, topx, topl, bottomx, bottoml, dx, dy ) {
 }
 
 checkscore() {
+}
 
+drawrect( x, y, w, h, mode ) {
+
+   newx = int( x + origin.x );
+   newy = int( y + origin.y );
    
+   moveto( newx, newy );
 
+   if        ( mode == Line ) {
+      
+      lineto( newx + w, newy     );
+      lineto( newx + w, newy + h );
+      lineto( newx    , newy + h );
+      lineto( newx    , newy     );
+
+   } else if ( mode == Fill ) {
+      
+      for ( i = 0; i < h; i++ ) {
+         lineto( newx + w, newy   );
+         moveto( newx    , newy++ );
+      }
+
+   }
+   
+}
+
+translateorigin( x, y ) {
+   origin.x = x; origin.y = y;
 }
